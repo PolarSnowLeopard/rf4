@@ -137,7 +137,7 @@ if not DEBUG:
         'default': {
             'ENGINE': 'django.db.backends.mysql',
             'NAME': os.environ.get('DB_NAME', 'rf4'),
-            'USER': os.environ.get('DB_USER', 'rf4user'),
+            'USER': os.environ.get('DB_USERNAME', 'rf4user'),
             'PASSWORD': os.environ.get('DB_PASSWORD', ''),
             'HOST': os.environ.get('DB_HOST', ''),  # 腾讯云数据库地址
             'PORT': os.environ.get('DB_PORT', '3306'),
@@ -147,7 +147,7 @@ if not DEBUG:
             }
         }
     }
-    
+
     # 设置静态文件收集目录
     STATIC_ROOT = 'staticfiles'
     
