@@ -129,8 +129,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 关闭自动添加斜杠
 APPEND_SLASH = False
 
-# 生产环境安全设置
-if not DEBUG:  # 只在生产环境启用
+# 只在生产环境 (DEBUG=False) 中启用 WhiteNoise 和相关静态文件配置
+if not DEBUG:
+    # 设置静态文件收集目录
+    STATIC_ROOT = 'staticfiles'
+    
+    # 在现有中间件列表中插入 WhiteNoise
+    # 注意：必须放在 SecurityMiddleware 之后
+    MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
+    
+    # WhiteNoise 存储配置
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
     # SECURE_HSTS_SECONDS = 31536000  # 1年
     # SECURE_SSL_REDIRECT = True
     # SESSION_COOKIE_SECURE = True

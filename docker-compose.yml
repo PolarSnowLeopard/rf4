@@ -2,8 +2,7 @@ version: '3.9'
 
 services:
   rf4-backend:
-    build: .
-    container_name: rf4-backend
+    image: polarsnowleopard/rf4-backend:latest
     restart: always
     ports:
       - "9999:9999"
@@ -11,6 +10,8 @@ services:
       - .env
     environment:
       - DJANGO_SETTINGS_MODULE=rf4.settings
+    volumes:
+      - static_volume:/project/app/staticfiles
     command: python -m gunicorn rf4.asgi:application -k uvicorn.workers.UvicornWorker -b 0.0.0.0:9999
 
 volumes:
