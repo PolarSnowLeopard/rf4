@@ -14,6 +14,8 @@ from pathlib import Path
 import secrets
 from dotenv import load_dotenv
 import os
+import pymysql
+pymysql.install_as_MySQLdb()
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -131,6 +133,21 @@ APPEND_SLASH = False
 
 # 只在生产环境 (DEBUG=False) 中启用 WhiteNoise 和相关静态文件配置
 if not DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ.get('DB_NAME', 'rf4'),
+            'USER': os.environ.get('DB_USER', 'rf4user'),
+            'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+            'HOST': os.environ.get('DB_HOST', ''),  # 腾讯云数据库地址
+            'PORT': os.environ.get('DB_PORT', '3306'),
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'connect_timeout': 30,
+            }
+        }
+    }
+    
     # 设置静态文件收集目录
     STATIC_ROOT = 'staticfiles'
     
