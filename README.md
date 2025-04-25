@@ -36,6 +36,16 @@ python manage.py fish_import data/fish_data.json
 
 ### 3. 部署时启动
 
+- 生产环境容器化部署
+- 容器启动后先更新数据库结构
+
 ```bash
-python -m gunicorn rf4.asgi:application -k uvicorn.workers.UvicornWorker -b 0.0.0.0:8888
+# 创建迁移文件（如果尚未创建）
+docker-compose exec rf4-backend python manage.py makemigrations
+
+# 应用迁移，创建表结构
+docker-compose exec rf4-backend python manage.py migrate
+
+# 创建超级用户(如果还没创建)
+docker-compose exec rf4-backend python manage.py createsuperuser
 ```

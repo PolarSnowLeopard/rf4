@@ -1,4 +1,6 @@
 data_analyse/
+**/migrations/
+**/.DS_Store
 
 # Python virtual environment
 .venv/
