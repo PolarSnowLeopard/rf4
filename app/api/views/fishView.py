@@ -1,8 +1,17 @@
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework.decorators import api_view
-from fish.models import Fish
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from fish.models import Fish, Catch
 from api.serializers.fishSerializer import FishSerializer
+from api.serializers.catchSerializer import CatchSerializer, ImageUploadSerializer, ImageProcessingResponseSerializer
+
+from services.catch_extractor.main import extract_fishes
+
+import os
+from django.conf import settings
+import base64
+from io import BytesIO
 
 @api_view(['GET', 'POST'])
 def fish_list(request):
@@ -36,3 +45,55 @@ def fish_detail(request, name: str):
     elif request.method == 'DELETE':
         fish.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def get_catch_from_image(request):
+    """
+    从上传的图片中识别渔获信息
+    ---
+    请求体:
+      image: 鱼类图片文件
+    响应:
+      image: 处理后的图片（Base64编码）
+      fishes: 识别出的渔获列表，格式为二维数组:
+        [[时间百分比, 鱼名, 重量, 分数], 
+         [时间百分比, 鱼名, 重量, 分数], ...]
+        
+        例如: [["42分-97%", "镜鲤", "3.705公斤", "2.59"], ...]
+    """
+    serializer = ImageUploadSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    original_image = serializer.validated_data['image']
+    
+    # 保存图片
+    image_path = os.path.join(settings.ASSETS_DIR, 'original_image.png')
+    if not os.path.exists(os.path.dirname(image_path)):
+        os.makedirs(os.path.dirname(image_path))
+
+    with open(image_path, 'wb') as f:
+        f.write(original_image.read())
+    
+    # 调用extract_fishes
+    image, fishes = extract_fishes(image_path=image_path)
+
+    # base64编码
+    img_buffer = BytesIO()
+    image.save(img_buffer, format='PNG')
+    img_buffer.seek(0)
+    image = base64.b64encode(img_buffer.read()).decode('utf-8')
+
+    # 准备响应数据
+    response_data = {
+        'image': image,
+        'fishes': fishes
+    }
+    
+    # 使用响应序列化器验证响应格式
+    response_serializer = ImageProcessingResponseSerializer(data=response_data)
+    response_serializer.is_valid(raise_exception=True)
+    
+    # 返回验证后的数据
+    return Response(response_serializer.validated_data)

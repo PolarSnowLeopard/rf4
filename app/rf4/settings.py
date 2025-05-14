@@ -130,6 +130,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+# 资源文件目录
+ASSETS_DIR = os.path.join(BASE_DIR, 'assets')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -157,7 +160,9 @@ if not DEBUG:
 
     # 设置静态文件收集目录
     STATIC_ROOT = 'staticfiles'
-    
+    # 生产环境下覆盖ASSETS_DIR设置
+    ASSETS_DIR = 'assets'
+
     # 在现有中间件列表中插入 WhiteNoise
     # 注意：必须放在 SecurityMiddleware 之后
     MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware')
