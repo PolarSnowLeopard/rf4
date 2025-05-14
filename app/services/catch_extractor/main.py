@@ -8,13 +8,10 @@ from services.catch_extractor.utils import (BoundingBox,
                    load_image_from_url, 
                    load_image_from_file, 
                    save_image_to_file, 
-                   draw_bounding_boxes_on_image)
+                   draw_bounding_boxes_on_image,
+                   get_field_from_word)
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-
-INPUT_PATH = 'fish_grid.png'
-# INPUT_PATH = 'https://rf4-1317429791.cos.ap-shanghai.myqcloud.com/imgs/fish_grid_0002.png'
-OUTPUT_IMAGE_PATH = 'main_result.png'
 
 def extract_fishes(image_url: str = None, image_path: str = None) -> tuple[Image.Image, list[list[str]]]:
     """
@@ -34,7 +31,7 @@ def extract_fishes(image_url: str = None, image_path: str = None) -> tuple[Image
     if image_type == "url":
         image = load_image_from_url(image_url)
     elif image_type == "local":
-        image = load_image_from_file(os.path.join(current_dir, INPUT_PATH))
+        image = load_image_from_file(os.path.join(current_dir, image_path))
     
     # 1. 调用roboflow目标检测工作流，识别fish_cards
     if image_type == "url":
@@ -60,11 +57,19 @@ def extract_fishes(image_url: str = None, image_path: str = None) -> tuple[Image
 
     # 5. 解析ocr结果，获取文字信息
     words_cards = []
+    # 只从鱼市出售页面的列表中提取文字
+    unmarked_bounding = BoundingBox(410, 126, 1920 - 410, 1080 - 126, False)
     for item in ocr_result['words_result']:
         location = item['location']
         left, top, width, height = location['left'], location['top'], location['width'], location['height']
         item['BoundingBox'] = BoundingBox(left, top, width, height, False, item['words'])
-        words_cards.append(item)
+        if unmarked_bounding.is_overlapping(item['BoundingBox']):
+            # 如果和上一个item的BoundingBox重叠，则合并
+            if words_cards and words_cards[-1]['BoundingBox'].is_overlapping(item['BoundingBox']):
+                words_cards[-1]['BoundingBox'] += item['BoundingBox']
+                words_cards[-1]['words'] += item['words']
+            else:
+                words_cards.append(item)
 
     # 6. 对于每个word_card，匹配与其重合的fish_card
     for i, word_card in enumerate(words_cards):
@@ -76,20 +81,26 @@ def extract_fishes(image_url: str = None, image_path: str = None) -> tuple[Image
     # 7 按每个fish整理word_cards
     fishes = []
     for i in range(len(fish_cards)):
-        fish = []
+        fish = dict()
         for word_card in words_cards:
             # 排除误识别的字块，如"√"和"×"
             if len(word_card['words']) < 2:
                 continue
             fish_card_index = word_card.get('fish_card_index', None)
             if fish_card_index is not None and fish_card_index == i:
-                fish.append(word_card['words'])
+                item = get_field_from_word(word_card['words'])
+                field_name, field_value = item['key'], item['value']
+                fish[field_name] = field_value
         if len(fish) > 0:
-            fishes.append(fish)
+            fishes.append([fish.get('time_percentage', ''), 
+                           fish.get('fish_name', ''), 
+                           fish.get('weight', ''), 
+                           fish.get('price', '')])
 
     # 8 保存fishes
-    with open(os.path.join(current_dir, 'fishes.json'), 'w') as f:
-        json.dump(fishes, f, indent=4, ensure_ascii=False)
+    # with open(os.path.join(current_dir, 'fishes.json'), 'w') as f:
+    #     json.dump(fishes, f, indent=4, ensure_ascii=False)
+    print(json.dumps(fishes, indent=4, ensure_ascii=False))
 
     # 9 绘制结果
     draw_bounding_boxes_on_image(image, fish_cards)
@@ -101,6 +112,9 @@ def extract_fishes(image_url: str = None, image_path: str = None) -> tuple[Image
     
 
 def main():
+    INPUT_PATH = 'fish_grid.jpg'
+    OUTPUT_IMAGE_PATH = 'main_result.png'
+
     image, fishes = extract_fishes(image_path=os.path.join(current_dir, INPUT_PATH))
     save_image_to_file(image, os.path.join(current_dir, OUTPUT_IMAGE_PATH))
 

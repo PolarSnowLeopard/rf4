@@ -79,6 +79,10 @@ def get_catch_from_image(request):
     # 调用extract_fishes
     image, fishes = extract_fishes(image_path=image_path)
 
+    # 保存处理后的图片
+    with open(os.path.join(settings.ASSETS_DIR, 'result_image.png'), 'wb') as f:
+        image.save(f, format='PNG')
+
     # base64编码
     img_buffer = BytesIO()
     image.save(img_buffer, format='PNG')

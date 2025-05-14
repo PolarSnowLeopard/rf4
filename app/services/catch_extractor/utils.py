@@ -4,6 +4,7 @@ from io import BytesIO
 import os
 import base64
 import urllib.parse
+import re
 
 class BoundingBox:
     """
@@ -122,23 +123,23 @@ class BoundingBox:
             (self.left, self.bottom)                # 左下角
         )
     
-    def is_overlapping(self, other: 'BoundingBox', error_margin: int=25):
+    def is_overlapping(self, other: 'BoundingBox', error_margin: int=10):
         """
         判断本方框是否与另一个方框有重叠部分
         
         参数:
             other: 另一个BoundingBox对象
-            error_margin: 误差范围
+            error_margin: 误差范围（仅横向）
         
         返回:
             bool: 如果有重叠则返回True，否则返回False
         """
-        # 如果一个方框在另一个方框的左边或右边，则不重叠（误差）
+        # 如果一个方框在另一个方框的左边或右边，则不重叠（允许误差）
         if self.right < other.left - error_margin or self.left > other.right + error_margin:
             return False
         
-        # 如果一个方框在另一个方框的上边或下边，则不重叠（误差）
-        if self.bottom < other.top - error_margin or self.top > other.bottom + error_margin:
+        # 如果一个方框在另一个方框的上边或下边，则不重叠（不允许误差）
+        if self.bottom < other.top or self.top > other.bottom:
             return False
         
         # 其他情况下，两个方框重叠
@@ -205,6 +206,23 @@ class BoundingBox:
                 f"left-top=({self.left:.1f}, {self.top:.1f}), "
                 f"width={self.width:.1f}, height={self.height:.1f}, "
                 f"word='{self.word}')")
+    
+    def __add__(self, other):
+        """合并两个BoundingBox对象"""
+        left = min(self.left, other.left)
+        top = min(self.top, other.top)
+        width = max(self.right, other.right) - left
+        height = max(self.bottom, other.bottom) - top
+
+        return BoundingBox(
+            x=left,
+            y=top,
+            width=width, 
+            height=height,
+            is_center_format=False,
+            word=self.word + other.word
+        )
+    
 
 def load_image_from_url(url: str) -> Image.Image:
     """
@@ -337,23 +355,48 @@ def get_file_content_as_base64(path, urlencoded=False):
             content = urllib.parse.quote_plus(content)
     return content
 
+def get_field_from_word(word: str) -> dict:
+    """
+    根据文字，识别字段
+    :param word: 文字(ocr提取的)
+    :return: 字段名，字段值
+    """
+    legal_fish_name = ["镜鲤", "鲤鲫鱼"]
+
+    # 判断是否为时间百分比
+    if "分" in word:
+        word = word[:word.index("分")+1]
+        return {"key": "time_percentage", "value": word}
+    
+    # 判断是否为重量
+    if "克" in word or "公斤" in word:
+        if "公斤" in word:
+            word = word.replace("公斤", "")
+        else:
+            word = str(float(word.replace("克", "")) / 1000)
+        return {"key": "weight", "value": word}
+    
+    # 判断是否为鱼类名称
+    if word in legal_fish_name:
+        return {"key": "fish_name", "value": word}
+    
+    # 判断是否为售价
+    if re.match(r'^\d+(\.\d+)?$', word):
+        return {"key": "price", "value": word}
+    
+    return {"key": "fish_name", "value": word}
+
 # 示例用法
 if __name__ == "__main__":
     # 创建方框示例
-    box1 = BoundingBox.from_yolo_format(100, 100, 50, 50)
-    box2 = BoundingBox.from_baidu_format(120, 120, 40, 40)
+    box1 = BoundingBox(40, 10, 20, 20, False, "123")
+    box2 = BoundingBox(10, 10, 20, 20, False, "456")
     
     # 输出方框信息
     print(f"方框1: {box1}")
     print(f"方框2: {box2}")
     
-    # 判断是否重叠
-    print(f"两个方框是否重叠: {box1.is_overlapping(box2)}")
-    
-    # 计算重叠面积
-    print(f"重叠面积: {box1.overlap_area(box2)}")
-    
-    # 计算IoU
-    print(f"IoU: {box1.iou(box2)}")
+    box1 += box2
+    print(f"合并后的方框: {box1}")
 
 

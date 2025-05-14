@@ -41,6 +41,6 @@ class FishCatchItemSerializer(serializers.Serializer):
 class ImageProcessingResponseSerializer(serializers.Serializer):
     image = serializers.CharField(help_text="处理后的图片（Base64编码）")
     fishes = serializers.ListField(
-        child=serializers.ListField(child=serializers.CharField()),
+        child=serializers.ListField(child=serializers.CharField(allow_blank=True)),
         help_text="识别出的鱼类列表，格式为二维数组 [[时间百分比, 鱼名, 重量, 分数], ...]"
     ) 
