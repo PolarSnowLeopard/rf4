@@ -17,7 +17,7 @@ def extract_fishes(image_url: str = None, image_path: str = None) -> tuple[Image
     """
     提取图片中的鱼
     :param image_url: 图片url
-    :param image_path: 图片路径
+    :param image_path: 图片路径，绝对路径
     :return: 图片和fishes
     """
     if image_url:
@@ -31,7 +31,7 @@ def extract_fishes(image_url: str = None, image_path: str = None) -> tuple[Image
     if image_type == "url":
         image = load_image_from_url(image_url)
     elif image_type == "local":
-        image = load_image_from_file(os.path.join(current_dir, image_path))
+        image = load_image_from_file(image_path)
     
     # 1. 调用roboflow目标检测工作流，识别fish_cards
     if image_type == "url":
