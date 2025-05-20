@@ -143,20 +143,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # 关闭自动添加斜杠
 APPEND_SLASH = False
 
-# 添加CORS配置
-# 允许所有来源的跨域请求
-CORS_ALLOW_ALL_ORIGINS = True
-
-# 或者只允许特定域名的跨域请求
-# CORS_ALLOWED_ORIGINS = [
-#     "https://example.com",
-#     "https://sub.example.com",
-#     "http://localhost:8000",
-#     "http://127.0.0.1:9000",
-# ]
+# 启用这些配置
+CORS_ALLOWED_ORIGINS = [
+    "http://fdueblab.cn:5173",
+]
 
 # 允许携带cookie信息
-# CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = True
 
 # 允许的HTTP方法
 # CORS_ALLOW_METHODS = [
