@@ -2,7 +2,8 @@
 data_analyse/
 **/migrations/
 **/.DS_Store
-
+app/assets/
+*.sqlite3
 # Python virtual environment
 .venv/
 venv/
