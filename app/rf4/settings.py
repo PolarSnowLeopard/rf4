@@ -46,6 +46,7 @@ REST_FRAMEWORK = {
 INSTALLED_APPS = [
     'fish',
     'rest_framework',
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,6 +57,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -140,6 +142,45 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # 关闭自动添加斜杠
 APPEND_SLASH = False
+
+# 添加CORS配置
+# 允许所有来源的跨域请求
+CORS_ALLOW_ALL_ORIGINS = True
+
+# 或者只允许特定域名的跨域请求
+# CORS_ALLOWED_ORIGINS = [
+#     "https://example.com",
+#     "https://sub.example.com",
+#     "http://localhost:8000",
+#     "http://127.0.0.1:9000",
+# ]
+
+# 允许携带cookie信息
+# CORS_ALLOW_CREDENTIALS = True
+
+# 允许的HTTP方法
+# CORS_ALLOW_METHODS = [
+#     "DELETE",
+#     "GET",
+#     "OPTIONS",
+#     "PATCH",
+#     "POST",
+#     "PUT",
+# ]
+
+# 允许的HTTP头
+# CORS_ALLOW_HEADERS = [
+#     "accept",
+#     "accept-encoding",
+#     "authorization",
+#     "content-type",
+#     "dnt",
+#     "origin",
+#     "user-agent",
+#     "x-csrftoken",
+#     "x-requested-with",
+# ]
+
 
 # 只在生产环境 (DEBUG=False) 中启用 WhiteNoise 和相关静态文件配置
 if not DEBUG:
