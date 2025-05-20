@@ -1,8 +1,6 @@
-from django.urls import path
-from api.views.fishView import fish_list, fish_detail, get_catch_from_image
+from django.urls import path, include
 
 urlpatterns = [
-    path('fish', fish_list),
-    path('fish/<str:name>', fish_detail),
-    path('catch_from_image', get_catch_from_image),
+    path('user/', include('user.urls')),
+    path('wiki/', include('wiki.urls')),
 ]

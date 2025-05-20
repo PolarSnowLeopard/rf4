@@ -1,4 +1,4 @@
-from fish.models import Fish
+from wiki.models import Fish
 from rest_framework import serializers
 
 class FishSerializer(serializers.ModelSerializer):

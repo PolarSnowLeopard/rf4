@@ -55,8 +55,8 @@ SIMPLE_JWT = {
 # Application definition
 
 INSTALLED_APPS = [
-    'fish',
     'user',
+    'wiki',
     'rest_framework',
     'corsheaders',
     'django.contrib.admin',

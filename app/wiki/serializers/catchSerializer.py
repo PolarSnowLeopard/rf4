@@ -1,4 +1,4 @@
-from fish.models import Catch
+from wiki.models import Catch
 from rest_framework import serializers
 
 class CatchSerializer(serializers.ModelSerializer):
