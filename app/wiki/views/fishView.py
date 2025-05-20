@@ -1,24 +1,51 @@
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from wiki.models import Fish, Catch
 from wiki.serializers.fishSerializer import FishSerializer
 from wiki.serializers.catchSerializer import CatchSerializer, ImageUploadSerializer, ImageProcessingResponseSerializer
 
 from services.catch_extractor.main import extract_fishes
+from rest_framework.pagination import PageNumberPagination
 
 import os
 from django.conf import settings
 import base64
 from io import BytesIO
+from django.db.models import Q
+
+class CustomPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
 
 @api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
 def fish_list(request):
     if request.method == 'GET':
-        fish = Fish.objects.all()
-        serializer = FishSerializer(fish, many=True)
-        return Response(serializer.data)
+        # 获取查询参数
+        search_query = request.query_params.get('search', None)
+        fish_class = request.query_params.get('fish_class', None)
+        
+        # 初始查询集
+        queryset = Fish.objects.all()
+        
+        # 应用搜索过滤
+        if search_query:
+            queryset = queryset.filter(name__icontains=search_query)
+        
+        # 应用类别过滤
+        if fish_class:
+            queryset = queryset.filter(fish_class=fish_class)
+        
+        # 分页
+        paginator = CustomPagination()
+        result_page = paginator.paginate_queryset(queryset, request)
+        
+        # 序列化
+        serializer = FishSerializer(result_page, many=True)
+        return paginator.get_paginated_response(serializer.data)
     elif request.method == 'POST':
         serializer = FishSerializer(data=request.data)
         if serializer.is_valid():
@@ -27,6 +54,7 @@ def fish_list(request):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def fish_detail(request, name: str):
     try:
         fish = Fish.objects.get(name=name)
